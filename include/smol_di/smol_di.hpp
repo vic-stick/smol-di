@@ -21,6 +21,11 @@ consteval bool validate_bindings() {
     return detail::validate_bindings<Bindings...>();
 }
 
+template <std::meta::info Service, typename... Config>
+consteval Lifetime lifetime_for() {
+    return detail::lifetime_for<Service, Config...>();
+}
+
 template <typename Root, typename... Config>
 auto create_container(Config...) {
     return detail::make_container<Root, std::remove_cvref_t<Config>...>();

@@ -8,9 +8,10 @@
 
 namespace smol_di::detail {
 template <typename... Registrations> struct Container;
+template <typename... Registrations> class Scope;
 template <typename Registration> struct Holder;
-template <typename T, typename... Registrations>
-T construct_from_dependencies(Container<Registrations...> &container);
+template <typename T, typename Resolver>
+T construct_from_dependencies(Resolver &resolver);
 
 template <std::meta::info Service, std::meta::info Implementation>
 struct Holder<Registration<Service, Implementation, Lifetime::Singleton>> {
@@ -19,9 +20,23 @@ struct Holder<Registration<Service, Implementation, Lifetime::Singleton>> {
     static constexpr auto lifetime = Lifetime::Singleton;
 
     std::optional<T> instance;
-    template <typename Container> T &get(Container &container) {
+    template <typename Resolver> T &get(Resolver &resolver) {
         if (!instance)
-            instance.emplace(construct_from_dependencies<T>(container));
+            instance.emplace(construct_from_dependencies<T>(resolver));
+        return *instance;
+    }
+};
+
+template <std::meta::info Service, std::meta::info Implementation>
+struct Holder<Registration<Service, Implementation, Lifetime::Scoped>> {
+    using T = [:Implementation:];
+
+    static constexpr auto lifetime = Lifetime::Scoped;
+
+    std::optional<T> instance;
+    template <typename Resolver> T &get(Resolver &resolver) {
+        if (!instance)
+            instance.emplace(construct_from_dependencies<T>(resolver));
         return *instance;
     }
 };
@@ -29,26 +44,45 @@ struct Holder<Registration<Service, Implementation, Lifetime::Singleton>> {
 template <typename... Registrations> struct Container {
     std::tuple<Holder<Registrations>...> holders;
     template <typename T> T &get();
+    auto create_scope();
 };
 
-template <std::meta::info Param, typename... Registrations>
-decltype(auto) get_parameter(Container<Registrations...> &container) {
+template <typename... Registrations> class Scope {
+  public:
+    using ContainerType = Container<Registrations...>;
+
+    explicit Scope(ContainerType &container) : container_(container) {}
+
+    template <typename T> T &get();
+
+  private:
+    ContainerType &container_;
+    std::tuple<Holder<Registrations>...> holders;
+};
+
+template <typename... Registrations>
+auto Container<Registrations...>::create_scope() {
+    return Scope<Registrations...>{*this};
+}
+
+template <std::meta::info Param, typename Resolver>
+decltype(auto) get_parameter(Resolver &resolver) {
     constexpr auto type =
         std::meta::remove_reference(std::meta::type_of(Param));
     using Dependency = [:type:];
-    return container.template get<Dependency>();
+    return resolver.template get<Dependency>();
 }
-template <typename T, typename... Registrations>
-auto get_constructor_parameters(Container<Registrations...> &container) {
+template <typename T, typename Resolver>
+auto get_constructor_parameters(Resolver &resolver) {
     constexpr auto constructor = get_constructor(^^T);
     return [:expand(std::meta::parameters_of(
                  constructor)):] >> [&]<auto parameter>() -> decltype(auto) {
-        return get_parameter<parameter>(container);
+        return get_parameter<parameter>(resolver);
     };
 }
-template <typename T, typename... Registrations>
-T construct_from_dependencies(Container<Registrations...> &container) {
-    auto dependencies = get_constructor_parameters<T>(container);
+template <typename T, typename Resolver>
+T construct_from_dependencies(Resolver &resolver) {
+    auto dependencies = get_constructor_parameters<T>(resolver);
     return std::apply([](auto &...dependencies) { return T{dependencies...}; },
                       dependencies);
 }
@@ -57,15 +91,35 @@ template <typename T>
 T &Container<Registrations...>::get() {
     using RegistrationType =
         typename find_registration<^^T, Registrations...>::type;
+    if constexpr (RegistrationType::lifetime == Lifetime::Scoped) {
+        static_assert(RegistrationType::lifetime == Lifetime::Singleton,
+                      "Scoped service must be resolved through a Scope");
+    } else {
+        using HolderType = Holder<RegistrationType>;
+        return std::get<HolderType>(holders).get(*this);
+    }
+    return *static_cast<T *>(nullptr);
+}
+
+template <typename... Registrations>
+template <typename T>
+T &Scope<Registrations...>::get() {
+    using RegistrationType =
+        typename find_registration<^^T, Registrations...>::type;
     using HolderType = Holder<RegistrationType>;
-    return std::get<HolderType>(holders).get(*this);
+
+    if constexpr (RegistrationType::lifetime == Lifetime::Singleton) {
+        return container_.template get<T>();
+    } else {
+        return std::get<HolderType>(holders).get(*this);
+    }
 }
 
 template <typename... Bindings, std::meta::info... Types>
 consteval auto make_registrations(type_list<Types...>) {
     return registration_types<
         Registration<Types, implementation_for<Types, Bindings...>(),
-                     Lifetime::Singleton>...>{};
+                     lifetime_for<Types, Bindings...>()>...>{};
 }
 template <typename... Registrations> struct container_builder {
     using type = Container<Registrations...>;
@@ -130,12 +184,42 @@ template <std::meta::info Type> consteval auto collect_dependencies() {
     return dependency_list<Type>();
 }
 
+template <std::meta::info Type, typename... Registrations>
+consteval bool lifetime_dependencies_safe(
+    registration_types<Registrations...> registrations) {
+    using RegistrationType =
+        typename find_registration<Type, Registrations...>::type;
+
+    if constexpr (RegistrationType::lifetime == Lifetime::Scoped) {
+        return true;
+    } else {
+        constexpr auto dependencies =
+            dependency_list<RegistrationType::implementation_info>();
+        return []<typename... Dependencies>(
+                   dependency_types<Dependencies...>,
+                   registration_types<Registrations...>) {
+            return ((find_registration<Dependencies::type_info,
+                                       Registrations...>::type::lifetime ==
+                     Lifetime::Singleton) &&
+                    ...);
+        }(dependencies, registrations);
+    }
+}
+
+template <typename... Registrations>
+consteval bool validate_lifetime_graph(
+    registration_types<Registrations...> registrations) {
+    return (lifetime_dependencies_safe<Registrations::service_info>(
+                registrations) &&
+            ...);
+}
+
 template <typename Root, typename... Bindings> auto make_container() {
-    if constexpr ((valid_binding<Bindings>() && ...)) {
+    if constexpr (all_bindings_valid<Bindings...>()) {
         static_assert(validate_bindings<Bindings...>(),
                       "A service may only have one binding");
     } else {
-        static_assert((valid_binding<Bindings>() && ...),
+        static_assert(all_bindings_valid<Bindings...>(),
                       "Binding implementation is not convertible to service");
     }
 
@@ -147,6 +231,9 @@ template <typename Root, typename... Bindings> auto make_container() {
                   "Container has an unregistered dependency");
 
     constexpr auto registrations = make_registrations<Bindings...>(collected);
+
+    static_assert(validate_lifetime_graph(registrations),
+                  "A singleton cannot depend on a scoped service");
 
     constexpr auto container_type = make_container_type(registrations);
 
