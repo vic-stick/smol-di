@@ -10,7 +10,7 @@ struct Repository : IRepository {
     explicit Repository(RepositoryConfig &) {}
 };
 
-using RepositoryBinding = smol_di::Binding<^^IRepository, ^^Repository>;
+using RepositoryBinding = smol_di::Binding<IRepository, Repository>;
 using Bindings = smol_di::detail::binding_types<RepositoryBinding>;
 constexpr auto graph = smol_di::detail::unique(
     smol_di::detail::collect<^^IRepository, Bindings>());

@@ -41,7 +41,8 @@ struct find_binding<Service, First, Rest...>
     : find_binding_impl<First::service_info == Service, Service, First,
                         Rest...> {};
 template <std::meta::info Service> struct find_binding<Service> {
-    using type = Binding<Service, Service>;
+    using service_type = [:Service:];
+    using type = Binding<service_type, service_type>;
 };
 template <std::meta::info Service, typename... Bindings>
 consteval auto implementation_for() {

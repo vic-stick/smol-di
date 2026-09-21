@@ -19,25 +19,28 @@ struct IBar {
 struct Bar : IBar {};
 struct Database {};
 
-using RepositoryBinding = smol_di::Binding<^^IUserRepository, ^^UserRepository>;
+using RepositoryBinding = smol_di::Binding<IUserRepository, UserRepository>;
 
 constexpr auto implementation =
     smol_di::detail::implementation_for<^^IUserRepository, RepositoryBinding>();
 static_assert(implementation == ^^UserRepository);
 
-using FooBinding = smol_di::Binding<^^IFoo, ^^Foo>;
-using BarBinding = smol_di::Binding<^^IBar, ^^Bar>;
+using FooBinding = smol_di::Binding<IFoo, Foo>;
+using BarBinding = smol_di::Binding<IBar, Bar>;
 
 static_assert(smol_di::contains_binding<^^IFoo, FooBinding, BarBinding>());
 static_assert(smol_di::contains_binding<^^IBar, FooBinding, BarBinding>());
 static_assert(!smol_di::contains_binding<^^Database, FooBinding, BarBinding>());
 static_assert(smol_di::validate_bindings<FooBinding, BarBinding>());
 
-using DuplicateFooBinding = smol_di::Binding<^^IFoo, ^^Foo>;
+using DuplicateFooBinding = smol_di::Binding<IFoo, Foo>;
 static_assert(!smol_di::validate_bindings<FooBinding, DuplicateFooBinding>());
 
-using ValidBinding = smol_di::Binding<^^IUserRepository, ^^UserRepository>;
-using InvalidBinding = smol_di::Binding<^^IUserRepository, ^^Database>;
+using ValidBinding = smol_di::Binding<IUserRepository, UserRepository>;
+using InvalidBinding = smol_di::Binding<IUserRepository, Database>;
+
+static_assert(RepositoryBinding::service_info == ^^IUserRepository);
+static_assert(RepositoryBinding::implementation_info == ^^UserRepository);
 
 static_assert(smol_di::valid_binding<ValidBinding>());
 static_assert(!smol_di::valid_binding<InvalidBinding>());

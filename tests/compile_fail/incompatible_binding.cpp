@@ -10,7 +10,7 @@ struct UserService {
 
 struct Database {};
 
-using BadBinding = smol_di::Binding<^^IUserRepository, ^^Database>;
+using BadBinding = smol_di::Binding<IUserRepository, Database>;
 
 int main() {
     auto app = smol_di::create_container<UserService, BadBinding>();
