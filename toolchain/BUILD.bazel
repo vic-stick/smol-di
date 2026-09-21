@@ -1,0 +1,31 @@
+load("@rules_cc//cc:defs.bzl", "cc_toolchain")
+load(":gcc16_config.bzl", "gcc16_toolchain_config")
+
+filegroup(
+    name = "empty",
+    srcs = [],
+)
+
+gcc16_toolchain_config(name = "gcc16_config")
+
+cc_toolchain(
+    name = "gcc16",
+    all_files = ":empty",
+    ar_files = ":empty",
+    as_files = ":empty",
+    compiler_files = ":empty",
+    coverage_files = ":empty",
+    dwp_files = ":empty",
+    linker_files = ":empty",
+    objcopy_files = ":empty",
+    strip_files = ":empty",
+    supports_param_files = 1,
+    toolchain_config = ":gcc16_config",
+    toolchain_identifier = "homebrew-gcc-16",
+)
+
+toolchain(
+    name = "gcc16_toolchain",
+    toolchain = ":gcc16",
+    toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+)

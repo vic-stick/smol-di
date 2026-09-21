@@ -1,0 +1,5 @@
+# The reflection implementation used by this experiment is currently GCC 16.
+# Invoke Bazel with `--config=reflection-gcc` to opt in.
+build:reflection-gcc --extra_toolchains=//toolchain:gcc16_toolchain
+build:reflection-gcc --cxxopt=-std=c++2c
+build:reflection-gcc --cxxopt=-freflection

@@ -1,0 +1,10 @@
+load("@rules_cc//cc:defs.bzl", "cc_test")
+
+cc_test(
+    name = "smol_di_test",
+    srcs = ["smol_di_test.cpp"],
+    deps = [
+        "//:smol_di",
+        "@googletest//:gtest",
+    ],
+)
