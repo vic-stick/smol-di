@@ -1,6 +1,7 @@
 #include "smol_di/smol_di.hpp"
 
 #include <gtest/gtest.h>
+#include <type_traits>
 
 struct IUserRepository {
     virtual ~IUserRepository() = default;
@@ -41,6 +42,15 @@ using InvalidBinding = smol_di::Binding<IUserRepository, Database>;
 
 static_assert(RepositoryBinding::service_info == ^^IUserRepository);
 static_assert(RepositoryBinding::implementation_info == ^^UserRepository);
+
+static_assert(std::is_same_v<
+              decltype(smol_di::bind<IUserRepository, UserRepository>),
+              const smol_di::Binding<IUserRepository, UserRepository>>);
+
+using BoundRepository = std::remove_cv_t<decltype(
+    smol_di::bind<IUserRepository, UserRepository>)>;
+static_assert(BoundRepository::service_info == ^^IUserRepository);
+static_assert(BoundRepository::implementation_info == ^^UserRepository);
 
 static_assert(smol_di::valid_binding<ValidBinding>());
 static_assert(!smol_di::valid_binding<InvalidBinding>());

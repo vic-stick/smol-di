@@ -12,6 +12,9 @@ struct Binding {
     static constexpr auto implementation_info = ^^Implementation;
 };
 
+template <typename Service, typename Implementation>
+inline constexpr Binding<Service, Implementation> bind{};
+
 } // namespace smol_di
 
 namespace smol_di::detail {

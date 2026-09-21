@@ -17,9 +17,8 @@ struct UserService {
 };
 
 TEST(ContainerTest, InjectsBoundImplementation) {
-    using RepositoryBinding =
-        smol_di::Binding<IUserRepository, UserRepository>;
-    auto app = smol_di::create_container<UserService, RepositoryBinding>();
+    auto app = smol_di::create_container<UserService>(
+        smol_di::bind<IUserRepository, UserRepository>);
 
     auto &service = app.get<UserService>();
     auto &repository = app.get<IUserRepository>();
