@@ -43,7 +43,7 @@ consteval auto concat_all(type_list<A...> a, type_list<B...> b, Rest... rest) {
 
 template <auto... Values> struct replicator_type {
     template <typename F> constexpr auto operator>>(F body) const {
-        return std::tuple{body.template operator()<Values>()...};
+        return std::forward_as_tuple(body.template operator()<Values>()...);
     }
 };
 template <auto... Values> replicator_type<Values...> replicator{};

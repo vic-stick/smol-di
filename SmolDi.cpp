@@ -1,5 +1,7 @@
 #include "smol_di/smol_di.hpp"
 
+#include <print>
+
 struct Database {};
 
 struct Logger {};
@@ -22,11 +24,14 @@ struct IUserRepository {
 struct UserRepository : IUserRepository {
     UserRepository(Database &db) {}
 
-    void save() override {}
+    void save() override { std::println("UserRepository::save()"); }
 };
 
 struct UserService {
-    UserService(IUserRepository &repo, Database &db, Logger &logger) {}
+    IUserRepository &repository;
+
+    UserService(IUserRepository &repo, Database &db, Logger &logger)
+        : repository(repo) {}
 };
 
 struct UserController {
@@ -34,17 +39,16 @@ struct UserController {
 };
 
 int main() {
-
     using RepositoryBinding =
         smol_di::Binding<^^IUserRepository, ^^UserRepository>;
 
-    using Found =
-        smol_di::find_binding<^^IUserRepository, RepositoryBinding>::type;
+    auto app = smol_di::create_container<UserController, RepositoryBinding>();
 
-    static_assert(Found::implementation_info == ^^UserRepository);
+    auto &controller = app.get<UserController>();
 
-    using DatabaseBinding =
-        smol_di::find_binding<^^Database, RepositoryBinding>::type;
+    (void)controller;
 
-    static_assert(DatabaseBinding::implementation_info == ^^Database);
+    app.get<UserService>().repository.save();
+
+    std::println("UserController constructed!");
 }

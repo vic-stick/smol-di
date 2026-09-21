@@ -46,4 +46,13 @@ consteval auto implementation_for() {
     using BindingType = typename find_binding<Service, Bindings...>::type;
     return BindingType::implementation_info;
 }
+
+template <std::meta::info Type, typename BindingList>
+struct graph_implementation;
+
+template <std::meta::info Type, typename... Bindings>
+struct graph_implementation<Type, binding_types<Bindings...>> {
+    static constexpr auto value = implementation_for<Type, Bindings...>();
+};
+
 } // namespace smol_di

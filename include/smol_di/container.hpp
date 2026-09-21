@@ -32,7 +32,7 @@ template <typename... Registrations> struct Container {
 };
 
 template <std::meta::info Param, typename... Registrations>
-auto get_parameter(Container<Registrations...> &container) {
+decltype(auto) get_parameter(Container<Registrations...> &container) {
     constexpr auto type =
         std::meta::remove_reference(std::meta::type_of(Param));
     using Dependency = [:type:];
@@ -42,7 +42,7 @@ template <typename T, typename... Registrations>
 auto get_constructor_parameters(Container<Registrations...> &container) {
     constexpr auto constructor = get_constructor(^^T);
     return [:expand(std::meta::parameters_of(
-                 constructor)):] >> [&]<auto parameter>() {
+                 constructor)):] >> [&]<auto parameter>() -> decltype(auto) {
         return get_parameter<parameter>(container);
     };
 }
@@ -90,27 +90,36 @@ template <std::meta::info Type> consteval bool cycle_error() {
     return false;
 }
 
-template <typename... Dependencies, std::meta::info... Path>
+template <typename... Dependencies, std::meta::info... Path,
+          typename BindingList>
 consteval auto collect_each(dependency_types<Dependencies...>,
-                            type_list<Path...> path);
-template <std::meta::info Type, std::meta::info... Path>
+                            type_list<Path...> path, BindingList bindings);
+
+template <std::meta::info Type, typename BindingList, std::meta::info... Path>
 consteval auto collect() {
     if constexpr (contains<Type>(type_list<Path...>{})) {
         cycle_error<Type>();
         return type_list<>{};
     } else {
-        constexpr auto direct = dependency_list<Type>();
-        return concat_all(type_list<Type>{},
-                          collect_each(direct, type_list<Type, Path...>{}));
+        constexpr auto implementation =
+            graph_implementation<Type, BindingList>::value;
+
+        constexpr auto direct = dependency_list<implementation>();
+
+        return concat_all(
+            type_list<Type>{},
+            collect_each(direct, type_list<Type, Path...>{}, BindingList{}));
     }
 }
-template <typename... Dependencies, std::meta::info... Path>
+template <typename... Dependencies, std::meta::info... Path,
+          typename BindingList>
 consteval auto collect_each(dependency_types<Dependencies...>,
-                            type_list<Path...>) {
+                            type_list<Path...>, BindingList) {
     if constexpr (sizeof...(Dependencies) == 0)
         return type_list<>{};
     else
-        return concat_all(collect<Dependencies::type_info, Path...>()...);
+        return concat_all(
+            collect<Dependencies::type_info, BindingList, Path...>()...);
 }
 template <typename... Registrations>
 consteval auto make_container_type(registration_types<Registrations...>) {
@@ -121,13 +130,20 @@ template <std::meta::info Type> consteval auto collect_dependencies() {
     return dependency_list<Type>();
 }
 
-template <typename Root> auto create_container() {
-    constexpr auto collected = unique(collect<^^Root>());
+template <typename Root, typename... Bindings> auto create_container() {
+    using BindingList = binding_types<Bindings...>;
+
+    constexpr auto collected = unique(collect<^^Root, BindingList>());
+
     static_assert(validate_container(collected),
                   "Container has an unregistered dependency");
-    constexpr auto registrations = make_registrations(collected);
+
+    constexpr auto registrations = make_registrations<Bindings...>(collected);
+
     constexpr auto container_type = make_container_type(registrations);
+
     using App = [:container_type:];
+
     return App{};
 }
 } // namespace smol_di

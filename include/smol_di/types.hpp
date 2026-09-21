@@ -25,6 +25,7 @@ struct Registration {
 template <std::meta::info... Types> struct type_list {};
 template <typename... Dependencies> struct dependency_types {};
 template <typename... Registrations> struct registration_types {};
+template <typename... Bindings> struct binding_types {};
 
 template <std::meta::info Type, DependencyKind Kind> struct Dependency {
     using type = [:Type:];
