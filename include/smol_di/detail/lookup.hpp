@@ -70,6 +70,7 @@ template <> struct binding_validator<> {
 template <typename First, typename... Rest>
 struct binding_validator<First, Rest...> {
     static constexpr bool value =
+        valid_binding<First>() &&
         !contains_binding<First::service_info, Rest...>() &&
         binding_validator<Rest...>::value;
 };

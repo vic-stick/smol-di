@@ -131,8 +131,13 @@ template <std::meta::info Type> consteval auto collect_dependencies() {
 }
 
 template <typename Root, typename... Bindings> auto make_container() {
-    static_assert(validate_bindings<Bindings...>(),
-                  "A service may only have one binding");
+    if constexpr ((valid_binding<Bindings>() && ...)) {
+        static_assert(validate_bindings<Bindings...>(),
+                      "A service may only have one binding");
+    } else {
+        static_assert((valid_binding<Bindings>() && ...),
+                      "Binding implementation is not convertible to service");
+    }
 
     using BindingList = binding_types<Bindings...>;
 
