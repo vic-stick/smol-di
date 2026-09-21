@@ -3,14 +3,18 @@
 #include <meta>
 
 namespace smol_di {
-enum class Lifetime { Singleton };
-enum class DependencyKind { Value, LValueReference };
-
 template <std::meta::info Service, std::meta::info Implementation>
 struct Binding {
     static constexpr auto service_info = Service;
     static constexpr auto implementation_info = Implementation;
 };
+
+} // namespace smol_di
+
+namespace smol_di::detail {
+
+enum class Lifetime { Singleton };
+enum class DependencyKind { Value, LValueReference };
 
 template <std::meta::info Service, std::meta::info Implementation,
           Lifetime Value>
@@ -32,4 +36,4 @@ template <std::meta::info Type, DependencyKind Kind> struct Dependency {
     static constexpr auto type_info = Type;
     static constexpr auto kind = Kind;
 };
-} // namespace smol_di
+} // namespace smol_di::detail

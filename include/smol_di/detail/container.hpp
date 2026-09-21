@@ -1,12 +1,12 @@
 #pragma once
 
-#include "smol_di/lookup.hpp"
-#include "smol_di/reflection.hpp"
+#include "smol_di/detail/lookup.hpp"
+#include "smol_di/detail/reflection.hpp"
 
 #include <optional>
 #include <tuple>
 
-namespace smol_di {
+namespace smol_di::detail {
 template <typename... Registrations> struct Container;
 template <typename Registration> struct Holder;
 template <typename T, typename... Registrations>
@@ -130,7 +130,7 @@ template <std::meta::info Type> consteval auto collect_dependencies() {
     return dependency_list<Type>();
 }
 
-template <typename Root, typename... Bindings> auto create_container() {
+template <typename Root, typename... Bindings> auto make_container() {
     using BindingList = binding_types<Bindings...>;
 
     constexpr auto collected = unique(collect<^^Root, BindingList>());
@@ -146,4 +146,4 @@ template <typename Root, typename... Bindings> auto create_container() {
 
     return App{};
 }
-} // namespace smol_di
+} // namespace smol_di::detail

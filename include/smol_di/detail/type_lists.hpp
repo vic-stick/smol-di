@@ -1,11 +1,11 @@
 #pragma once
 
-#include "smol_di/types.hpp"
+#include "smol_di/detail/types.hpp"
 
 #include <tuple>
 #include <vector>
 
-namespace smol_di {
+namespace smol_di::detail {
 template <std::meta::info Target, std::meta::info... Types>
 consteval bool contains(type_list<Types...>) {
     return ((Target == Types) || ...);
@@ -68,4 +68,4 @@ template <typename R> consteval auto expand_type_list(R range) {
             std::meta::remove_reference(std::meta::type_of(r))));
     return std::meta::substitute(^^type_list_replicator, args);
 }
-} // namespace smol_di
+} // namespace smol_di::detail

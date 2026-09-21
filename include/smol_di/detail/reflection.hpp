@@ -1,8 +1,8 @@
 #pragma once
 
-#include "smol_di/type_lists.hpp"
+#include "smol_di/detail/type_lists.hpp"
 
-namespace smol_di {
+namespace smol_di::detail {
 template <std::meta::info Param> consteval auto make_dependency() {
     constexpr auto parameter_type = std::meta::type_of(Param);
     constexpr auto type = std::meta::remove_reference(parameter_type);
@@ -34,4 +34,4 @@ template <std::meta::info Type> consteval auto dependency_list() {
     using Builder = [:builder:];
     return typename Builder::type{};
 }
-} // namespace smol_di
+} // namespace smol_di::detail

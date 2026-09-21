@@ -1,8 +1,8 @@
 #pragma once
 
-#include "smol_di/types.hpp"
+#include "smol_di/detail/types.hpp"
 
-namespace smol_di {
+namespace smol_di::detail {
 template <std::meta::info Target, typename... Registrations>
 struct find_registration;
 template <bool Match, std::meta::info Target, typename First, typename... Rest>
@@ -55,4 +55,4 @@ struct graph_implementation<Type, binding_types<Bindings...>> {
     static constexpr auto value = implementation_for<Type, Bindings...>();
 };
 
-} // namespace smol_di
+} // namespace smol_di::detail

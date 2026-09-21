@@ -6,9 +6,3 @@ cc_library(
     includes = ["include"],
     visibility = ["//visibility:public"],
 )
-
-cc_binary(
-    name = "smol_di_demo",
-    srcs = ["SmolDi.cpp"],
-    deps = [":smol_di"],
-)

@@ -1,10 +1,9 @@
 load("@rules_cc//cc:defs.bzl", "cc_test")
 
-cc_test(
-    name = "smol_di_test",
-    srcs = ["smol_di_test.cpp"],
-    deps = [
-        "//:smol_di",
-        "@googletest//:gtest",
-    ],
-)
+TEST_DEPS = ["//:smol_di", "@googletest//:gtest"]
+
+cc_test(name = "binding_test", srcs = ["binding_test.cpp", "test_main.cpp"], deps = TEST_DEPS)
+cc_test(name = "dependency_test", srcs = ["dependency_test.cpp", "test_main.cpp"], deps = TEST_DEPS)
+cc_test(name = "graph_test", srcs = ["graph_test.cpp", "test_main.cpp"], deps = TEST_DEPS)
+cc_test(name = "container_test", srcs = ["container_test.cpp", "test_main.cpp"], deps = TEST_DEPS)
+cc_test(name = "lifetime_test", srcs = ["lifetime_test.cpp", "test_main.cpp"], deps = TEST_DEPS)
