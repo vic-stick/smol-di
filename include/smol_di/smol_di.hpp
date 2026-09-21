@@ -9,6 +9,11 @@ consteval bool contains_binding() {
     return detail::contains_binding<Service, Bindings...>();
 }
 
+template <typename Binding>
+consteval bool valid_binding() {
+    return detail::valid_binding<Binding>();
+}
+
 template <typename... Bindings>
 consteval bool validate_bindings() {
     return detail::validate_bindings<Bindings...>();

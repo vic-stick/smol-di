@@ -5,6 +5,9 @@
 namespace smol_di {
 template <std::meta::info Service, std::meta::info Implementation>
 struct Binding {
+    using service_type = [:Service:];
+    using implementation_type = [:Implementation:];
+
     static constexpr auto service_info = Service;
     static constexpr auto implementation_info = Implementation;
 };

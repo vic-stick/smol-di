@@ -2,6 +2,8 @@
 
 #include "smol_di/detail/types.hpp"
 
+#include <type_traits>
+
 namespace smol_di::detail {
 template <std::meta::info Target, typename... Registrations>
 struct find_registration;
@@ -50,6 +52,13 @@ consteval auto implementation_for() {
 template <std::meta::info Service, typename... Bindings>
 consteval bool contains_binding() {
     return ((Bindings::service_info == Service) || ...);
+}
+
+template <typename Binding>
+consteval bool valid_binding() {
+    using Service = typename Binding::service_type;
+    using Implementation = typename Binding::implementation_type;
+    return std::is_convertible_v<Implementation *, Service *>;
 }
 
 template <typename... Bindings> struct binding_validator;

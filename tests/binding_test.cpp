@@ -36,4 +36,10 @@ static_assert(smol_di::validate_bindings<FooBinding, BarBinding>());
 using DuplicateFooBinding = smol_di::Binding<^^IFoo, ^^Foo>;
 static_assert(!smol_di::validate_bindings<FooBinding, DuplicateFooBinding>());
 
+using ValidBinding = smol_di::Binding<^^IUserRepository, ^^UserRepository>;
+using InvalidBinding = smol_di::Binding<^^IUserRepository, ^^Database>;
+
+static_assert(smol_di::valid_binding<ValidBinding>());
+static_assert(!smol_di::valid_binding<InvalidBinding>());
+
 TEST(BindingTest, ResolvesImplementationAtCompileTime) { SUCCEED(); }
