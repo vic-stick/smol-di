@@ -4,6 +4,16 @@
 
 namespace smol_di {
 
+template <std::meta::info Service, typename... Bindings>
+consteval bool contains_binding() {
+    return detail::contains_binding<Service, Bindings...>();
+}
+
+template <typename... Bindings>
+consteval bool validate_bindings() {
+    return detail::validate_bindings<Bindings...>();
+}
+
 template <typename Root, typename... Bindings> auto create_container() {
     return detail::make_container<Root, Bindings...>();
 }

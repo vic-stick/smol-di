@@ -47,6 +47,29 @@ consteval auto implementation_for() {
     return BindingType::implementation_info;
 }
 
+template <std::meta::info Service, typename... Bindings>
+consteval bool contains_binding() {
+    return ((Bindings::service_info == Service) || ...);
+}
+
+template <typename... Bindings> struct binding_validator;
+
+template <> struct binding_validator<> {
+    static constexpr bool value = true;
+};
+
+template <typename First, typename... Rest>
+struct binding_validator<First, Rest...> {
+    static constexpr bool value =
+        !contains_binding<First::service_info, Rest...>() &&
+        binding_validator<Rest...>::value;
+};
+
+template <typename... Bindings>
+consteval bool validate_bindings() {
+    return binding_validator<Bindings...>::value;
+}
+
 template <std::meta::info Type, typename BindingList>
 struct graph_implementation;
 

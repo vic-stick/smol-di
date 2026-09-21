@@ -131,6 +131,9 @@ template <std::meta::info Type> consteval auto collect_dependencies() {
 }
 
 template <typename Root, typename... Bindings> auto make_container() {
+    static_assert(validate_bindings<Bindings...>(),
+                  "A service may only have one binding");
+
     using BindingList = binding_types<Bindings...>;
 
     constexpr auto collected = unique(collect<^^Root, BindingList>());
